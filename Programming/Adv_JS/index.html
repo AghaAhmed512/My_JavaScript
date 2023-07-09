@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Password Manager</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+</head>
+<body>
+	<h1>Password Manager</h1>
+	<div id="password-manager">
+		<h2>My Passwords</h2>
+		<ul id="password-list"></ul>
+		<button id="add-password">Add Password</button>
+	</div>
+	<script>
+		// Choose an encryption algorithm
+		const algorithm = 'AES';
+
+		// Create a master password
+		const masterPassword = 'myStrongPassword';
+
+		// Create a user interface
+		const passwordManager = document.querySelector('#password-manager');
+		const passwordList = passwordManager.querySelector('#password-list');
+		const addPasswordButton = passwordManager.querySelector('#add-password');
+
+		// Implement the encryption and decryption logic
+		function encryptPassword(password) {
+			const key = CryptoJS.enc.Utf8.parse(masterPassword);
+			const encryptedPassword = CryptoJS[algorithm].encrypt(password, key);
+			return encryptedPassword.toString();
+		}
+
+		function decryptPassword(encryptedPassword) {
+			const key = CryptoJS.enc.Utf8.parse(masterPassword);
+			const decryptedPassword = CryptoJS[algorithm].decrypt(encryptedPassword, key);
+			return decryptedPassword.toString(CryptoJS.enc.Utf8);
+		}
+
+		// Store the passwords securely
+		let passwords = JSON.parse(localStorage.getItem('passwords')) || [];
+		localStorage.setItem('passwords', JSON.stringify(passwords));
+
+		// Add a new password
+		function addPassword() {
+			const passwordName = prompt('Enter the name of the password:');
+			const passwordValue = prompt('Enter the password:');
+			const encryptedPassword = encryptPassword(passwordValue);
+			const password = {
+				name: passwordName,
+				value: encryptedPassword
+			};
+			passwords.push(password);
+			localStorage.setItem('passwords', JSON.stringify(passwords));
+			renderPasswords();
+		}
+
+		// Delete a password
+		function deletePassword(index) {
+			passwords.splice(index, 1);
+			localStorage.setItem('passwords', JSON.stringify(passwords));
+			renderPasswords();
+		}
+
+		// Update a password
+		function updatePassword(index) {
+			const passwordValue = prompt('Enter the new password:');
+			const encryptedPassword = encryptPassword(passwordValue);
+			passwords[index].value = encryptedPassword;
+			localStorage.setItem('passwords', JSON.stringify(passwords));
+			renderPasswords();
+		}
+
+		// Render the list of passwords
+		function renderPasswords() {
+			passwordList.innerHTML = '';
+			passwords.forEach((password, index) => {
+				const li = document.createElement('li');
+				const name = document.createElement('span');
+				const value = document.createElement('span');
+				const updateButton = document.createElement('button');
+				const deleteButton = document.createElement('button');
+				name.innerText = password.name;
+				value.innerText = decryptPassword(password.value);
+				updateButton.innerText = 'Update';
+				deleteButton.innerText = 'Delete';
+				updateButton.addEventListener('click', () => updatePassword(index));
+				deleteButton.addEventListener('click', () => deletePassword(index));
+				li.appendChild(name);
+				li.appendChild(value);
+				li.appendChild(updateButton);
+				li.appendChild(deleteButton);
+				passwordList.appendChild(li);
+			});
+		}
+
+		// Add event listeners
+		addPasswordButton.addEventListener('click', addPassword);
+
+		// Render the initial list of passwords
+		renderPasswords();
+	</script>
+</
